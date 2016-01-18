@@ -4,4 +4,4 @@ name:
    last: Pasumarthi
 email: rpasumar@andrew.cmu.edu
 leaderboard: ramk
-languages: [eng,hindi,telugu]
+languages: [eng,hin,tel]
