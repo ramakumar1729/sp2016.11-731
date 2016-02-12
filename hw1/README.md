@@ -19,6 +19,7 @@ The `data/` directory contains a fragment of the German/English Europarl corpus.
 
 
 IBM Model 1 has been implemented in this homework.
+
 IBM Model 1 was run using EM for various iterations, and for several decoding logic schemes.
 
 

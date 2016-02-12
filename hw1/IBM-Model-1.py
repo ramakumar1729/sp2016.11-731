@@ -102,8 +102,8 @@ with open('t72.pkl','w') as f:
     cPickle.dump(t, f)
 
 
-german_lines = [line[0].strip().lower().split() for line in lines][:1000]
-english_lines = [line[1].strip().lower().split() for line in lines][:1000]
+german_lines = [line[0].strip().lower().split() for line in lines]
+english_lines = [line[1].strip().lower().split() for line in lines]
 
 f = open('output.txt','w')
 for english_sent, german_sent in zip(english_lines, german_lines):
