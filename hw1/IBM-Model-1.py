@@ -101,6 +101,10 @@ for ind in range(num_iter):
 with open('t72.pkl','w') as f:
     cPickle.dump(t, f)
 
+def penalty_term(i,j,index):
+    if index == 2:
+        return abs(i-j)
+    return (i-j)*2
 
 german_lines = [line[0].strip().lower().split() for line in lines]
 english_lines = [line[1].strip().lower().split() for line in lines]
@@ -109,7 +113,7 @@ f = open('output.txt','w')
 for english_sent, german_sent in zip(english_lines, german_lines):
     aligned_words = []
     for ind1, eng_word in enumerate(english_sent):
-        translation_scores = [t[(eng_word, german_word)] for ind2, german_word in enumerate(german_sent)]
+        translation_scores = [(1.0 / ((1.0 + penalty_term(float(ind1)/len(english_sent),float(ind2)/len(german_sent),2)))) * t[(eng_word, german_word)] for ind2, german_word in enumerate(german_sent)]
         aligned_word = np.argmax(np.array(translation_scores).astype(np.float32))
         aligned_words.append('%d-%d' % (aligned_word, ind1) )
     f.write(' '.join(aligned_words) + '\n')

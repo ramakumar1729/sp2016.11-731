@@ -24,6 +24,7 @@ IBM Model 1 was run using EM for various iterations, and for several decoding lo
 
 decoding schemes:
 1. a_i = argmax_j p(e_i|g_j) -- most probable alignment based on translation probabilities computed by EM.
-2. a_i = argmax_j penalty * p(e_i|g_j)
+2. a_i = argmax_j 1/(1+penalty) * p(e_i|g_j) -- penalty = (i-j)**2
+3. a_i = argmax_j 1/(1+penalty) * p(e_i|g_j) -- penalty == |i/m - j/n|
 
 
