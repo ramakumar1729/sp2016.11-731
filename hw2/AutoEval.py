@@ -13,7 +13,7 @@ def weighted_F1(h,ref,rho):
     recall = float(sum(1 for w in ref if w in h))/len(ref)
     if precision == 0 or recall == 0:
         return 0
-    ret = (rho*precision)**-1 + recall**-1
+    ret = (precision)**-1 + (rho*recall)**-1
     return ret**-1
  
 def main():
