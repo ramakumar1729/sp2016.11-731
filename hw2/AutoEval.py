@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 import argparse # optparse is deprecated
 from itertools import islice # slicing for iterators
+import math
+
+from nltk.util import ngrams
+from collections import Counter
  
 # DRY
 def word_matches(h, ref):
@@ -14,7 +18,40 @@ def weighted_F1(h,ref,rho):
     if precision == 0 or recall == 0:
         return 0
     ret = (precision)**-1 + (rho*recall)**-1
-    return ret**-1
+    return 2 * ret**-1
+
+def BLEU(h,ref,n):
+    def brevity_penalty(h,ref):
+        c = len(h)
+        r = len(ref)
+        if c >= r:
+            return 1
+        else:
+            return math.exp(1 - r/c)
+    def modified_precision(h,ref,n):
+        ng_counts_h = Counter(ngrams(h,n))
+        ng_counts_ref = Counter(ngrams(ref,n))
+        modified_counts = Counter()   
+
+        
+        if not ng_counts_h:
+            return 0
+        for ng in ng_counts_h.keys():
+            modified_counts[ng] = max(modified_counts[ng], ng_counts_ref[ng])
+        truncated_cts = Counter((ng, min(ng_counts_h[ng],modified_counts[ng])) for ng in ng_counts_h)
+        return sum(truncated_cts.values())/float(sum(ng_counts_h.values()))
+        
+    weights = [1.0/n for x in xrange(n)]
+    mod_p = 0
+    for i,w in enumerate(weights):
+        x = modified_precision(h,ref,i)
+        if x == 0:
+            return 0
+        mod_p += w*math.log(x)
+      
+    return brevity_penalty(h,ref) * math.exp(mod_p)
+    
+    
  
 def main():
     parser = argparse.ArgumentParser(description='Evaluate translation hypotheses.')
@@ -40,8 +77,11 @@ def main():
         #h1_match = word_matches(h1, rset)
         #h2_match = word_matches(h2, rset)
         rho = opts.weight_F1
-        h1_match = weighted_F1(h1,rset,rho)
-        h2_match = weighted_F1(h2,rset,rho)
+        h1_match = weighted_F1(h1,rset,rho) + BLEU(h1,ref,3)
+        h2_match = weighted_F1(h2,rset,rho) + BLEU(h2,ref,3)
+        #h1_match = BLEU(h1,ref,2)
+        #h2_match = BLEU(h2,ref,2)
+
         print(-1 if h1_match > h2_match else # \begin{cases}
                 (0 if h1_match == h2_match
                     else 1)) # \end{cases}
