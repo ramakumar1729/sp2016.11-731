@@ -12,13 +12,31 @@ def word_matches(h, ref):
     # or sum(w in ref for w in f) # cast bool -> int
     # or sum(map(ref.__contains__, h)) # ugly!
 
+def modified_precision(h,ref,n):
+    ng_counts_h = Counter(ngrams(h,n))
+    ng_counts_ref = Counter(ngrams(ref,n))
+    modified_counts = Counter()   
+
+    
+    if not ng_counts_h:
+        return 0
+    for ng in ng_counts_h.keys():
+        modified_counts[ng] = max(modified_counts[ng], ng_counts_ref[ng])
+    truncated_cts = Counter((ng, min(ng_counts_h[ng],modified_counts[ng])) for ng in ng_counts_h)
+    return sum(truncated_cts.values())/float(sum(ng_counts_h.values()))
+
 def weighted_F1(h,ref,rho):
+    #h = list(ngrams(h_i,2)) + list(h_i)
+    #ref = list(ngrams(ref_i,2)) + list(ref_i)
+    
     precision = float(sum(1 for w in h if w in ref))/len(h)
+    precision = 0.5*modified_precision(h,ref,2) + 0.5*precision 
+    
     recall = float(sum(1 for w in ref if w in h))/len(ref)
     if precision == 0 or recall == 0:
         return 0
-    ret = (precision)**-1 + (rho*recall)**-1
-    return 2 * ret**-1
+    ret = (1-rho) * (precision)**-1 + rho * (recall)**-1
+    return  ret**-1
 
 def BLEU(h,ref,n):
     def brevity_penalty(h,ref):
@@ -28,18 +46,6 @@ def BLEU(h,ref,n):
             return 1
         else:
             return math.exp(1 - r/c)
-    def modified_precision(h,ref,n):
-        ng_counts_h = Counter(ngrams(h,n))
-        ng_counts_ref = Counter(ngrams(ref,n))
-        modified_counts = Counter()   
-
-        
-        if not ng_counts_h:
-            return 0
-        for ng in ng_counts_h.keys():
-            modified_counts[ng] = max(modified_counts[ng], ng_counts_ref[ng])
-        truncated_cts = Counter((ng, min(ng_counts_h[ng],modified_counts[ng])) for ng in ng_counts_h)
-        return sum(truncated_cts.values())/float(sum(ng_counts_h.values()))
         
     weights = [1.0/n for x in xrange(n)]
     mod_p = 0
@@ -62,6 +68,8 @@ def main():
             help='Number of hypothesis pairs to evaluate')
     parser.add_argument('-rho','--weight_F1',default=1,type=float,
             help='weight for P-R tradeoff')
+    parser.add_argument('-e','--epsilon',default=0,type=float,
+            help='epsilon for 0')
     # note that if x == [1, 2, 3], then x[:None] == x[:] == x (copy); no need for sys.maxint
     opts = parser.parse_args()
  
@@ -77,14 +85,20 @@ def main():
         #h1_match = word_matches(h1, rset)
         #h2_match = word_matches(h2, rset)
         rho = opts.weight_F1
-        h1_match = weighted_F1(h1,rset,rho) + BLEU(h1,ref,3)
-        h2_match = weighted_F1(h2,rset,rho) + BLEU(h2,ref,3)
+        h1_match = weighted_F1(h1,rset,rho) #+ BLEU(h1,ref,3)
+        h2_match = weighted_F1(h2,rset,rho) #+ BLEU(h2,ref,3)
         #h1_match = BLEU(h1,ref,2)
         #h2_match = BLEU(h2,ref,2)
-
-        print(-1 if h1_match > h2_match else # \begin{cases}
-                (0 if h1_match == h2_match
-                    else 1)) # \end{cases}
+        diff = h1_match - h2_match
+        eps = opts.epsilon
+        
+        if diff > eps:
+            print -1
+        elif diff < -eps:
+            print 1
+        else:
+            print 0
+        
  
 # convention to allow import of this file as a module
 if __name__ == '__main__':
