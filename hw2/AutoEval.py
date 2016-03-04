@@ -30,7 +30,7 @@ def weighted_F1(h,ref,rho):
     #ref = list(ngrams(ref_i,2)) + list(ref_i)
     
     precision = float(sum(1 for w in h if w in ref))/len(h)
-    precision = 0.5*modified_precision(h,ref,2) + 0.5*precision 
+    precision = 0.25* (modified_precision(h,ref,2) + precision + modified_precision(h,ref,3) + modified_precision(h,ref,4))
     
     recall = float(sum(1 for w in ref if w in h))/len(ref)
     if precision == 0 or recall == 0:
